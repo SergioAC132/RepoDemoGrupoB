@@ -79,7 +79,34 @@
     </table>
     <br>
     <form>
-        <label>Mensaje de la etiqueta</lab  el>
+        <label for="nombre">
+            Nombre:
+            <input id="nombre" name="nombre" type="text">
+        </label>
+        <br>
+        <label for="email">
+            Correo electrónico:
+            <input id="email" name="coreo" type="email">
+        </label>
+        <br>
+        <label>Genero:</label><br>
+        <label for="genero">
+            <input id="genero" name="genero" type="radio">
+            Femenino
+        </label><br>
+        <label for="genero2">
+            <input id="genero2" name="genero" type="radio">
+            Masculino
+        </label><br>
+        <label for="genero3">
+            <input id="genero3" name="genero" type="radio">
+            Otro
+        </label><br>
+        <label>
+            Escribe un comentario:<br>
+            <textarea name="comentario" rows="5" cols="80"></textarea>
+        </label><br>
+        <input type="button" value="Enviar">
     </form>
 </body>
 </html>
