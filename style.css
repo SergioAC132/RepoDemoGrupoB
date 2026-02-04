@@ -1,0 +1,107 @@
+body {
+    margin: 50px;
+    background: linear-gradient(0deg, #e56666 0%, #887c7c 100%);
+}
+
+h1 {
+    width: 500px;
+    text-align: center;
+    font-family: console, sans-serif;
+    color: white;
+    font-size: 50px;
+    transform: rotate(5deg);
+    text-shadow: 5px 5px 10px #000;
+    margin-left: auto;
+    margin-right: auto;
+}
+
+.intro {
+    background: black;
+    color: white;
+    font-size: 20px;
+    padding: 20px;
+}
+
+.menu {
+    padding: 50px;
+    background: pink;
+    margin-left: 20px;
+    margin-right: 20px;
+    text-decoration: none;
+    color: purple;
+    font-size: 50px;
+    block-size: 100px;
+}
+
+.nav {
+    font-size: 30px;
+    margin-top: 10px;
+    list-style: none;
+    padding-left: 0px;
+}
+
+.nav li {
+    display: inline-block;
+}
+
+.nav a {
+    color: white;
+    background-color: #13a4a4;
+    padding: 5px;
+    border-radius: 10px;
+    text-decoration: none;
+}
+
+a:link {
+    background-color: blue;
+    color: white;
+    text-decoration: none;
+    padding: 2px;
+}
+
+a:visited {
+    background-color: purple;
+}
+
+a:hover {
+    background-color: transparent;
+    color: blue;
+    text-decoration: underline;
+}
+
+a:active {
+    color: red;
+}
+
+.div-manzana {
+    margin: 10px;
+    padding: 20px;
+    background-color: #ed892c;
+    border-radius: 30px;
+}
+
+.div-chocolate {
+    margin: 10px;
+    padding: 20px;
+    background-color: #433223;
+    color: white;
+    border-radius: 30px;
+}
+
+.div-fresa {
+    margin: 10px;
+    padding: 20px;
+    background-color: #ee2b7f;
+    border-radius: 30px;
+}
+
+img {
+    padding: 20px;
+    border-radius: 50%;
+    background: linear-gradient(0deg, #f00 0%, #fff 100%);
+}
+
+.imagen-main {
+    display: flex;
+    justify-content: center;
+}
