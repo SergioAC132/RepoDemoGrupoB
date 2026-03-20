@@ -1,5 +1,6 @@
 const express=require("express");
 const cors=require("cors");
+const {createClient } = require("@supabase/supabase-js");
 
 const app=express();
 const port=3600;
@@ -8,57 +9,60 @@ app.use(cors());
 app.use(express.json());
 app.use(express.static("public"));
 
-let registros = [
-    {
-        id:1,
-        nombre: "Ana López",
-        email: "ana@ficachi.mx",
-        genero: "Femenino",
-        plataformas: ["Netflix", "HBO"]
-    },
-    
-    {
-        id:2,
-        nombre: "Juan González",
-        email: "juan@gmail.com",
-        genero: "Masculino",
-        plataformas: ["HBO"]
-    }
-];
+//Conexion a supabase
+require("dotenv").config();
+const supabase = createClient(
+    process.env.SUPABASE_URL,
+    process.env.SUPABASE_KEY
+);
 
-let idActual = 3;
+if(supabase)
+    console.log("SUpabase PostgreSQL OK!!")
+else 
+    console.log("No se pudo conectar a la base de datos")
 
-app.get("/api/usuarios", (req, res)=>{
-    res.json(registros);
+app.get("/api/usuarios", async (req, res)=>{
+    const {data, err} = await supabase
+    .from("usuarios")
+    .select("*");
+
+    if (err) return res.status(500).json(err);
+    res.json(data);
 });
 
-app.post("/api/usuarios", (req, res)=> {
-    const nuevo = {
-        id: idActual++,
+app.post("/api/usuarios", async(req, res)=> {
+    const {data, error} = await supabase
+    .from("usuarios")
+    .insert(
+        [
+            {
+                nombre: req.body.nombre,
+                email: req.body.email,
+                genero: req.body.genero,
+                plataformas: req.body.plataformas,
+            }
+        ]
+    )
+    .select();
+
+    if(error) return res.status(500).json(error);
+    res.json(data[0]);
+});
+
+app.put("/api/usuarios/:id", async(req, res)=>{
+    const {data, error} = await supabase
+    .from("usuarios")
+    .update({
         nombre: req.body.nombre,
         email: req.body.email,
         genero: req.body.genero,
-        plataformas: req.body.plataformas
-    };
+        plataformas: req.body.plataformas,
+    })
+    .eq("id", req.params.id)
+    .select();
 
-    registros.push(nuevo);
-    res.json(nuevo);
-});
-
-app.put("/api/usuarios/:id", (req, res)=>{
-    const id= parseInt(req.params.id);
-    const usuario = registros.find(u => u.id == id);
-
-    if (!usuario) {
-        return res.status(404).json({mensaje: "Usuario no encontrado"});
-    }
-
-    usuario.nombre = req.body.nombre;
-    usuario.email = req.body.email;
-    usuario.genero = req.body.genero;
-    usuario.plataformas = req.body.plataformas;
-
-    res.json(usuario);
+    if(error) return res.status(500).json(error);
+    res.json(data);
 });
 
 app.listen(port, () =>{
