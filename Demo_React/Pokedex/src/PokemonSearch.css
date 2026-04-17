@@ -1,0 +1,40 @@
+.search-container {
+  text-align: center;
+  font-family: sans-serif;
+  padding: 30px;
+}
+
+.search-container h2 {
+  margin-bottom: 20px;
+}
+
+.search-container form {
+  margin-bottom: 20px;
+}
+
+.search-container input {
+  padding: 10px;
+  border-radius: 8px;
+  border: 1px solid #ccc;
+  margin-right: 10px;
+  outline: none;
+}
+
+.search-container button {
+  padding: 10px 15px;
+  border-radius: 8px;
+  border: none;
+  background-color: #ff3e3e;
+  color: white;
+  cursor: pointer;
+  transition: 0.3s;
+}
+
+.search-container button:hover {
+  background-color: #d63030;
+}
+
+.error {
+  color: red;
+  margin-top: 10px;
+}
