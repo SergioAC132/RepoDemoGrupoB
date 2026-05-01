@@ -16,7 +16,7 @@ app.use(cors(
     }
 ));
 
-const SECRET = "super_secreto"; //no debe ir aqui, en el .env
+const SECRET = "supersecreto"; //no debe ir aqui, en el .env
 
 app.post("/login", (req, res)=>{
     const {username, password} = req.body;
