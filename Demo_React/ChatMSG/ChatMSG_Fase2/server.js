@@ -1,87 +1,103 @@
-import express from "express";
-import { WebSocketServer } from "ws";
-import http from "http";
-import cors from "cors";
-import Redis from "ioredis";
+import express from 'express';
+import http from 'http';
+import { Server as SocketServer } from 'socket.io';
+import Redis from 'ioredis';
+import { createAdapter } from '@socket.io/redis-adapter';
+import session from 'express-session';
+import ChatManager from './ChatManager.js';
 
-const app = express();
-app.use(cors());
+const REDIS_URL = process.env.REDIS_URL || 'redis://localhost:6379';
+const SESSION_SECRET = process.env.SESSION_SECRET || 'dev-secret-change-in-prod';
 
-const server = http.createServer(app);
-const wss = new WebSocketServer({ server });
+class Server {
+  constructor() {
+    this.app = express();
+    this.port = process.env.PORT || 4000;
+    this.server = http.createServer(this.app);
+    this.io = new SocketServer(this.server, {
+      cors: {
+        origin: process.env.CLIENT_ORIGIN || 'http://localhost:5173',
+        credentials: true
+      }
+    });
 
-// 🔴 Redis (remoto)
-const pub = new Redis("redis://TU_URL_REDIS");
-const sub = new Redis("redis://TU_URL_REDIS");
+    this.chatManager = new ChatManager();
 
-const CHANNEL = "chat";
+    const pub = new Redis(REDIS_URL);
+    const sub = pub.duplicate();
 
-// 🧠 Memoria local
-const clients = new Map();
-let messages = [];
+    // El adaptador sincroniza io.emit() entre todos los servidores con el mismo Redis
+    this.io.adapter(createAdapter(pub, sub));
 
-// 📡 Escuchar Redis
-sub.subscribe(CHANNEL);
+    this.middlewares();
+    this.routes();
+    this.sockets();
+  }
 
-sub.on("message", (channel, message) => {
-  const data = JSON.parse(message);
+  middlewares() {
+    this.app.use(express.json());
+    this.app.use(session({
+      secret: SESSION_SECRET,
+      resave: false,
+      saveUninitialized: false,
+      cookie: {
+        httpOnly: true,
+        secure: false,
+        maxAge: 24 * 60 * 60 * 1000
+      }
+    }));
+  }
 
-  // evitar re-procesar mensajes propios (opcional pero recomendable)
-  broadcast(data);
-});
+  routes() {
+    this.app.get('/api/me', (req, res) => {
+      const { username } = req.session;
+      if (username) {
+        res.json({ username });
+      } else {
+        res.status(401).json({ username: null });
+      }
+    });
 
-// 📢 Broadcast local
-function broadcast(data) {
-  wss.clients.forEach((client) => {
-    if (client.readyState === 1) {
-      client.send(JSON.stringify(data));
-    }
-  });
+    this.app.post('/api/session', (req, res) => {
+      const { username } = req.body;
+      if (!username?.trim()) {
+        return res.status(400).json({ error: 'El nombre de usuario es requerido' });
+      }
+      req.session.username = username.trim();
+      res.json({ username: req.session.username });
+    });
+
+    this.app.delete('/api/session', (req, res) => {
+      req.session.destroy((err) => {
+        if (err) return res.status(500).json({ error: 'Error al cerrar sesión' });
+        res.json({ ok: true });
+      });
+    });
+  }
+
+  sockets() {
+    this.io.on('connection', (socket) => {
+      console.log('Cliente conectado:', socket.id);
+
+      socket.emit('history', this.chatManager.getHistory());
+
+      socket.on('send_message', (data) => {
+        const msg = this.chatManager.addMessage(data.user, data.text);
+        this.io.emit('receive_message', msg);
+      });
+
+      socket.on('disconnect', () => {
+        console.log('Cliente desconectado:', socket.id);
+      });
+    });
+  }
+
+  listen() {
+    this.server.listen(this.port, () => {
+      console.log(`Servidor corriendo en http://localhost:${this.port}`);
+      console.log(`Redis URL: ${REDIS_URL}`);
+    });
+  }
 }
 
-wss.on("connection", (ws) => {
-  ws.on("message", async (msg) => {
-    const parsed = JSON.parse(msg);
-
-    switch (parsed.type) {
-      case "join":
-        clients.set(ws, parsed.username);
-
-        ws.send(JSON.stringify({
-          type: "history",
-          payload: messages,
-        }));
-        break;
-
-      case "message":
-        const message = {
-          user: clients.get(ws),
-          text: parsed.text,
-          time: new Date().toISOString(),
-        };
-
-        messages.push(message);
-
-        const payload = {
-          type: "message",
-          payload: message,
-        };
-
-        // 📡 enviar a Redis
-        await pub.publish(CHANNEL, JSON.stringify(payload));
-
-        // 📢 enviar local también (opcional porque Redis lo regresará)
-        broadcast(payload);
-
-        break;
-    }
-  });
-
-  ws.on("close", () => {
-    clients.delete(ws);
-  });
-});
-
-server.listen(3000, () => {
-  console.log("Servidor corriendo en 3000");
-});
+export default Server;
